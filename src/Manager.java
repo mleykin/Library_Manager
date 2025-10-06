@@ -1,10 +1,30 @@
 import java.io.*;
 import java.util.LinkedList;
 import java.util.Scanner;
+enum Atributes {genre, date}
 
 public class Manager {
-    final Scanner scan = new Scanner(System.in);
+    final Scanner scan;
     final InputValidator validator = new InputValidator();
+
+    public Manager() {
+        this(null);
+        System.out.println("ERROR: Manager can't be used without scanner!");
+    }
+
+    public Manager(Scanner scanner){
+        scan = scanner;
+    }
+
+    public void help(){
+        System.out.println("Commands:\nCreate new book: create\n" +
+                "Check all books in collection: list\n" +
+                "Find books with attribute: find\n" +
+                "Edit attribute in one book: edit\n" +
+                "Save collection tp file: save\n" +
+                "Upload collection from file: upload\n" +
+                "After choosing the command follow instructions");
+    }
 
     public Book create(){
         System.out.println("Insert name:");
@@ -13,7 +33,7 @@ public class Manager {
             name=scan.nextLine();
             name = name.trim();
             if (!name.isEmpty()) break;
-            else System.out.println("ERROR! The space is invalid name! \nInsert again: ");
+            else System.out.println("ERROR: The space is invalid name! \nInsert again: ");
         }
 
         System.out.println("Insert author:");
@@ -22,7 +42,7 @@ public class Manager {
             author=scan.nextLine();
             author = author.trim();
             if (!author.isEmpty()) break;
-            else System.out.println("ERROR! The space is invalid author! \nInsert again: ");
+            else System.out.println("ERROR: The space is invalid author! \nInsert again: ");
         }
 
         System.out.println("Insert genre:");
@@ -30,7 +50,7 @@ public class Manager {
         String input = new String();
         while (true) {
             input = scan.nextLine();
-            input = input.trim();
+            //input = input.trim();
             if (validator.validate(input, Atributes.genre)) {
                 genre = Genres.valueOf(input);
                 break;
@@ -42,7 +62,7 @@ public class Manager {
         input = "";
         while (true) {
             input = scan.nextLine();
-            input = input.trim();
+            //input = input.trim();
             if (input.equals("Unknown") || input.equals("unknown")) break;
             else if (validator.validate(input, Atributes.date)) {
                 date = Integer.parseInt(input);
@@ -55,7 +75,7 @@ public class Manager {
     }
 
     public void list(LinkedList<Book> books) {
-        if (books.isEmpty()) System.out.println("ERROR! The list is empty!");
+        if (books.isEmpty()) System.out.println("ERROR: The list is empty!");
         else {
             System.out.println("Books in collection:");
             for (Book book : books) book.info();
@@ -72,10 +92,10 @@ public class Manager {
 
     public void find(LinkedList<Book> books, LinkedList<Book> founded) {
         if (books.isEmpty()) {
-            System.out.println("ERROR! The list is empty!");
+            System.out.println("ERROR: The collection is empty!");
             return;
         } else {
-            System.out.println("Choose attribute name for finding:");
+            System.out.println("Choose attribute for finding:");
             String attribute = scan.nextLine();
             switch (attribute) {
                 case "name":
@@ -130,7 +150,7 @@ public class Manager {
                     break;
                 }
                 default:
-                    System.out.println("Wrong attribute!");
+                    System.out.println("ERROR: Wrong attribute!");
             }
             if (!founded.isEmpty()) for (Book cur_book : founded) cur_book.info();
             else System.out.println("No books are founded!");
@@ -149,14 +169,14 @@ public class Manager {
                 while (founded.size() > 1) {
                     System.out.println("Founded: ");
                     for (Book cur_book : founded) cur_book.info();
-                    System.out.println("Can't recognize the book! \nChoose one more attribute for identifying!");
+                    System.out.println("NOTIFY: Can't recognize the book! \nChoose one more attribute for identifying!");
                     find(founded, additional);
                     founded.clear();
                     founded.addAll(additional);
                     additional.clear();
                 }
                 if (founded.isEmpty()) {
-                    System.out.println("No books found!");
+                    System.out.println("No books are founded!");
                     break;
                 }
                 book = founded.getFirst();
@@ -169,7 +189,7 @@ public class Manager {
                 }
             } while (answer.equals("n"));
         } else {
-            System.out.println("ERROR! The list is empty!");
+            System.out.println("ERROR: The collection is empty!");
         }
         return null;
     }
@@ -235,8 +255,8 @@ public class Manager {
         for (Book existingBook : allBooks) {
             if (existingBook == book) continue;
             if (tempBook.isEquals(existingBook)) {
-                System.out.println("ERROR! This change would create a duplicate book!");
-                //return false;
+                System.out.println("ERROR: This change would create a duplicate book!");
+                return;
             }
         }
 
@@ -245,42 +265,62 @@ public class Manager {
         book.setGenre(Genres.valueOf(tempBook.getGenre()));
         book.setDate(tempBook.getDate());
         System.out.println("Book edited successfully!");
-        //return true;
     }
 
-    public void saveToFile(LinkedList<Book> books, String filename) {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
-            for (Book book : books) {
-                writer.println(book.getName() + "|" + book.getAuthor() + "|" +
-                        book.getGenre() + "|" + book.getDate());
+    // Убери throws Exception
+    public void saveToFile(LinkedList<Book> books) {
+        try {
+            System.out.println("Insert filename (ex. 'lib.txt'):");
+            String filename = scan.nextLine();
+
+            if (!filename.endsWith(".txt")) {
+                System.out.println("ERROR: File must have .txt extension!");
+                return;
             }
-            System.out.println("Books saved successfully!");
-        } catch (FileNotFoundException e) {
-            System.out.println("File not found!");
+
+            try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
+                for (Book book : books) {
+                    writer.print(book.getName() + "|" + book.getAuthor() + "|" +
+                            book.getGenre() + "|");
+                    if (book.getDate()==-1) writer.println("unknown");
+                    else writer.println(book.getDate());
+                }
+                System.out.println("Books saved successfully!");
+            }
         } catch (IOException e) {
-            System.out.println("Error saving file: " + e.getMessage());
+            System.out.println("ERROR: error saving file: " + e.getMessage());
         }
     }
 
-    public void loadFromFile(LinkedList<Book> books, String filename) {
+    public void loadFromFile(LinkedList<Book> books) {
+        System.out.println("Insert filename (ex. 'lib.txt'):");
+        String filename = scan.nextLine();
+
+        if (!filename.endsWith(".txt")) {
+            throw new IllegalArgumentException();
+        }
+
         try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
             String line;
-            books.clear(); // очищаем текущий список
+            books.clear();
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split("\\|");
                 if (parts.length == 4) {
                     String name = parts[0];
                     String author = parts[1];
                     Genres genre = Genres.valueOf(parts[2]);
-                    int date = Integer.parseInt(parts[3]);
+                    int date = -1;
+                    if (!parts[3].equals("unknown")) date = Integer.parseInt(parts[3]);
                     books.add(new Book(name, author, genre, date));
                 }
             }
             System.out.println("Books loaded successfully!");
         } catch (FileNotFoundException e) {
-            System.out.println("File not found!");
+            System.out.println("ERROR: File not found!");
         } catch (IOException e) {
-            System.out.println("Error reading file: " + e.getMessage());
+            System.out.println("ERROR: error reading file: " + e.getMessage());
+        } catch (IllegalArgumentException e){
+            System.out.println("ERROR: Illegal extension name! Use '.txt' only");
         }
     }
 }
