@@ -59,6 +59,7 @@ public class Book {
         this.date = date;
     }
 
+    //лучше было переопределить метод toString()    
     public void info(){
         System.out.println("Name: " + name + "\nAuthor: " + author +
                 "\nGenre: " + genre);
@@ -66,6 +67,7 @@ public class Book {
         else System.out.println("Writing date: unknown\n");
     }
 
+    //лучше было перелпределить метод equals()
     public boolean isEquals(Book book){
         if (book.getName().equals(name) &&
                 book.getAuthor().equals(author) &&
