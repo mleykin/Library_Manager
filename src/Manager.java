@@ -26,6 +26,7 @@ public class Manager {
                 "After choosing the command follow instructions");
     }
 
+    //может ли юзер передумать создавать книгу и выйти по ходу процесса?
     public Book create(){
         System.out.println("Insert name:");
         String name = new String();
@@ -203,6 +204,7 @@ public class Manager {
             case "name": case "Name": {
                 System.out.println("Insert new name:");
                 String input = scan.nextLine();
+                //здесь валидация на пустое  имя не делается
                 tempBook.setName(input);
                 break;
             }
